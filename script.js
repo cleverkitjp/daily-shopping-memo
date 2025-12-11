@@ -89,10 +89,12 @@
   var modeShoppingBtn;
   var filterTodayCheckbox;
   var itemsContainer;
+  var customSection;
   var customForm;
   var customNameInput;
   var resetTodayBtn;
   var resetAllBtn;
+  var freeMemoTextarea;
 
   // -------------------------
   // state 初期化・保存
@@ -100,7 +102,7 @@
 
   function createDefaultState() {
     return {
-      version: 1,
+      version: 2,
       items: PRESET_ITEMS.map(function (item) {
         return {
           id: item.id,
@@ -116,7 +118,8 @@
         mode: "stock",          // "stock" | "shopping"
         filterToday: false,
         collapsedCategories: {} // { "冷凍": true, ... }
-      }
+      },
+      memo: ""
     };
   }
 
@@ -153,7 +156,9 @@
           ? data.settings.collapsedCategories
           : {};
 
-      data.version = 1;
+      data.memo = typeof data.memo === "string" ? data.memo : "";
+
+      data.version = 2;
 
       return data;
     } catch (e) {
@@ -278,6 +283,7 @@
   }
 
   function hideOrDeleteItem(item) {
+    // 在庫チェックモードでのみ呼ばれる想定
     if (item.builtin) {
       if (
         window.confirm(
@@ -295,6 +301,12 @@
     }
   }
 
+  function setMemo(text) {
+    state.memo = text;
+    autoResizeMemo();
+    saveState();
+  }
+
   // -------------------------
   // 描画
   // -------------------------
@@ -304,6 +316,23 @@
     modeStockBtn.classList.toggle("active", state.settings.mode === "stock");
     modeShoppingBtn.classList.toggle("active", state.settings.mode === "shopping");
     filterTodayCheckbox.checked = state.settings.filterToday;
+
+    // その他の買うものを追加カードは、買い物中モードでは非表示
+    if (customSection) {
+      if (state.settings.mode === "shopping") {
+        customSection.style.display = "none";
+      } else {
+        customSection.style.display = "";
+      }
+    }
+
+    // メモ欄の内容を state から反映
+    if (freeMemoTextarea) {
+      if (freeMemoTextarea.value !== state.memo) {
+        freeMemoTextarea.value = state.memo || "";
+      }
+      autoResizeMemo();
+    }
 
     itemsContainer.innerHTML = "";
 
@@ -449,30 +478,26 @@
 
           actions.appendChild(doneButton);
 
-          // 非表示／削除ボタン（プリセット＝非表示／追加品＝削除）
-          var delButton = document.createElement("button");
-          delButton.type = "button";
-          delButton.className = "delete-button";
-          if (item.builtin) {
-            delButton.textContent = "非表示";
-            delButton.setAttribute(
-              "aria-label",
-              "この品目をリストから非表示にする"
-            );
-          } else {
+          // 在庫チェックモードのときだけ × ボタンを表示
+          if (state.settings.mode === "stock") {
+            var delButton = document.createElement("button");
+            delButton.type = "button";
+            delButton.className = "delete-button";
             delButton.textContent = "×";
             delButton.setAttribute(
               "aria-label",
-              "この品目をリストから削除する"
+              item.builtin
+                ? "この品目をリストから非表示にする"
+                : "この品目をリストから削除する"
             );
+
+            delButton.addEventListener("click", function (e) {
+              e.stopPropagation();
+              hideOrDeleteItem(item);
+            });
+
+            actions.appendChild(delButton);
           }
-
-          delButton.addEventListener("click", function (e) {
-            e.stopPropagation();
-            hideOrDeleteItem(item);
-          });
-
-          actions.appendChild(delButton);
 
           row.appendChild(main);
           row.appendChild(actions);
@@ -484,6 +509,13 @@
     });
   }
 
+  // メモ欄の高さ自動調整
+  function autoResizeMemo() {
+    if (!freeMemoTextarea) return;
+    freeMemoTextarea.style.height = "auto";
+    freeMemoTextarea.style.height = freeMemoTextarea.scrollHeight + "px";
+  }
+
   // -------------------------
   // 初期化
   // -------------------------
@@ -493,13 +525,16 @@
     modeShoppingBtn = document.getElementById("mode-shopping-btn");
     filterTodayCheckbox = document.getElementById("filter-today");
     itemsContainer = document.getElementById("items-container");
+    customSection = document.getElementById("custom-section");
     customForm = document.getElementById("custom-form");
     customNameInput = document.getElementById("custom-name");
     resetTodayBtn = document.getElementById("reset-today-btn");
     resetAllBtn = document.getElementById("reset-all-btn");
+    freeMemoTextarea = document.getElementById("free-memo");
 
     state = loadState();
 
+    // モード切替
     modeStockBtn.addEventListener("click", function () {
       setMode("stock");
     });
@@ -508,10 +543,12 @@
       setMode("shopping");
     });
 
+    // フィルタ
     filterTodayCheckbox.addEventListener("change", function () {
       setFilterToday(filterTodayCheckbox.checked);
     });
 
+    // カスタム追加
     customForm.addEventListener("submit", function (e) {
       e.preventDefault();
       var value = customNameInput.value || "";
@@ -520,6 +557,7 @@
       customNameInput.value = "";
     });
 
+    // リセット
     resetTodayBtn.addEventListener("click", function () {
       if (
         window.confirm(
@@ -533,12 +571,21 @@
     resetAllBtn.addEventListener("click", function () {
       if (
         window.confirm(
-          "すべて初期化して、プリセットだけの状態に戻しますか？\n追加した品目や非表示設定はすべて削除されます。"
+          "すべて初期化して、プリセットだけの状態に戻しますか？\n追加した品目や非表示設定、メモはすべて削除されます。"
         )
       ) {
         resetAll();
       }
     });
+
+    // メモ欄
+    if (freeMemoTextarea) {
+      freeMemoTextarea.value = state.memo || "";
+      autoResizeMemo();
+      freeMemoTextarea.addEventListener("input", function () {
+        setMemo(freeMemoTextarea.value || "");
+      });
+    }
 
     render();
   }
