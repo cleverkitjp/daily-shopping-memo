@@ -217,7 +217,7 @@ body {
   cursor: default;
 }
 
-/* 削除ボタン（カスタム用） */
+/* 削除／非表示ボタン（共通で×表示） */
 .delete-button {
   border: none;
   background: transparent;
@@ -243,6 +243,25 @@ body {
 }
 
 .custom-input:focus {
+  border-color: #ff9f43;
+  box-shadow: 0 0 0 2px rgba(255, 159, 67, 0.2);
+}
+
+/* メモ欄 */
+.memo-textarea {
+  width: 100%;
+  min-height: 72px;
+  border-radius: 10px;
+  border: 1px solid #ffc48a;
+  padding: 8px 10px;
+  font-size: 0.9rem;
+  line-height: 1.6;
+  resize: none;
+  box-sizing: border-box;
+  outline: none;
+}
+
+.memo-textarea:focus {
   border-color: #ff9f43;
   box-shadow: 0 0 0 2px rgba(255, 159, 67, 0.2);
 }
