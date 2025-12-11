@@ -1,314 +1,359 @@
-/* ベース */
+/* ================================
+   全体レイアウト・ベース
+================================ */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
 body {
   margin: 0;
   padding: 0;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  background: #fff8f1;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue",
+    "Yu Gothic UI", "游ゴシック体", "Yu Gothic", "メイリオ", sans-serif;
+  background: linear-gradient(180deg, #e4f3ff 0%, #ffffff 40%, #e8f4ff 100%);
   color: #333;
 }
 
-.ck-container {
-  max-width: 720px;
+.app-container {
+  max-width: 480px;
   margin: 0 auto;
-  padding: 16px;
-  box-sizing: border-box;
+  padding: 16px 12px 32px;
 }
 
-/* カード共通 */
-.card {
+/* ================================
+   タイトルカード
+================================ */
+.title-card {
   background: #ffffff;
-  border-radius: 14px;
-  padding: 16px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-  margin-bottom: 14px;
-}
-
-/* ヘッダー */
-.app-header {
-  background: linear-gradient(135deg, #ffe3c4, #ffd2a0);
+  border-radius: 16px;
+  padding: 16px 16px 12px;
+  box-shadow: 0 4px 12px rgba(0, 90, 160, 0.15);
+  border: 2px solid #d0e6ff;
+  text-align: center;
+  margin-bottom: 16px;
 }
 
 .app-title {
-  font-size: 1.25rem;
-  margin: 0 0 8px;
+  margin: 0 0 4px;
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #1772d0;
+  letter-spacing: 0.08em;
 }
 
-.app-description {
-  font-size: 0.9rem;
-  line-height: 1.6;
+.app-subtitle {
   margin: 0;
-}
-
-/* モード切替 */
-.app-controls {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.mode-toggle {
-  display: flex;
-  gap: 8px;
-}
-
-.mode-button {
-  flex: 1;
-  border-radius: 999px;
-  border: 1px solid #ffc48a;
-  background: #fff7ef;
-  padding: 8px 10px;
   font-size: 0.9rem;
-  cursor: pointer;
-  outline: none;
-  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+  color: #555;
 }
 
-.mode-button.active {
-  background: #ff9f43;
-  color: #fff;
-  border-color: #ff9f43;
+/* ================================
+   ステージ選択ボタン
+================================ */
+.stage-select-container {
+  margin-top: 10px;
 }
 
-/* フィルタ */
-.filter-toggle {
-  display: flex;
-  justify-content: flex-start;
-}
-
-.filter-label {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
+.stage-select-label {
+  display: block;
   font-size: 0.9rem;
-}
-
-/* セクション */
-.section-title {
-  font-size: 1rem;
-  margin: 0 0 8px;
-}
-
-.note-text {
-  font-size: 0.8rem;
-  color: #777;
-  margin: 8px 0 0;
-}
-
-/* プリセットリスト */
-.items-section {
-  margin-bottom: 8px;
-}
-
-.category-card {
-  margin-bottom: 10px;
-}
-
-.category-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
+  color: #1772d0;
   margin-bottom: 6px;
 }
 
-.category-title {
-  font-size: 0.95rem;
-  font-weight: 600;
-}
-
-.category-count {
-  font-size: 0.75rem;
-  color: #999;
-}
-
-/* 行 */
-.item-row {
+.stage-buttons {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 8px 4px;
-  border-radius: 8px;
-  margin-bottom: 2px;
-  gap: 8px;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: center;
 }
 
-.item-row:nth-child(odd) {
-  background: #fffaf5;
-}
-
-.item-row:nth-child(even) {
-  background: #fffbf8;
-}
-
-.item-row.is-buy {
-  border: 1px solid #ffcf99;
-}
-
-.item-row.is-done {
-  background: #e3f3e1;
-  border-color: #9ad08a;
-}
-
-.item-main {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex: 1;
-  min-width: 0;
-}
-
-.item-name {
-  font-size: 0.9rem;
-  word-break: break-all;
-}
-
-.item-name.done {
-  text-decoration: line-through;
-  color: #666;
-}
-
-/* 買うチェック */
-.buy-label {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 0.8rem;
-  padding: 4px 8px;
-  border-radius: 999px;
-  background: #fff;
-  border: 1px solid #ffd7aa;
-  cursor: pointer;
-  white-space: nowrap;  /* ← これを追加 */
-}
-
-.buy-label input[type="checkbox"] {
-  width: 16px;
-  height: 16px;
-}
-
-/* アクション */
-.item-actions {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.done-button {
-  border-radius: 999px;
+.stage-button {
   border: none;
   padding: 6px 10px;
+  border-radius: 999px;
   font-size: 0.8rem;
+  background: #f0f7ff;
+  color: #1772d0;
+  box-shadow: 0 2px 4px rgba(0, 60, 120, 0.15);
   cursor: pointer;
-  white-space: nowrap;
-  outline: none;
+  min-width: 48px;
 }
 
-.done-button.pending {
-  background: #ffe8c9;
-  color: #995200;
+.stage-button.active {
+  background: #1772d0;
+  color: #ffffff;
 }
 
-.done-button.completed {
-  background: #4caf50;
-  color: #fff;
+/* ================================
+   単語カード（フリップ対応）
+================================ */
+.word-card-area {
+  margin-top: 16px;
+  margin-bottom: 8px;
+  perspective: 1200px; /* フリップ用 */
 }
 
-.done-button.disabled {
-  background: #eee;
-  color: #999;
+.word-card {
+  width: 100%;
+  max-width: 480px;
+  margin: 0 auto;
+  height: 220px;
+  cursor: pointer;
+  position: relative;
+}
+
+.card-inner {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  transition: transform 0.5s;
+  transform-style: preserve-3d;
+}
+
+.word-card.is-flipped .card-inner {
+  transform: rotateY(180deg);
+}
+
+.card-face {
+  position: absolute;
+  inset: 0;
+  border-radius: 18px;
+  background: #ffffff;
+  border: 2px solid #d0e6ff;
+  box-shadow: 0 6px 16px rgba(0, 70, 120, 0.18);
+  padding: 12px 14px;
+  backface-visibility: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+/* 表 */
+.card-front {
+}
+
+/* 裏 */
+.card-back {
+  transform: rotateY(180deg);
+}
+
+/* カード内パーツ */
+.card-tag {
+  display: inline-block;
+  font-size: 0.7rem;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #f0f7ff;
+  color: #1772d0;
+  border: 1px solid #c0ddff;
+}
+
+.card-main {
+  text-align: center;
+  padding-top: 4px;
+}
+
+.card-stage-label {
+  font-size: 0.8rem;
+  margin: 0 0 4px;
+  color: #888;
+}
+
+/* 表：英語・カナ */
+.card-english-label,
+.card-kana-label {
+  font-size: 0.9rem;
+  margin: 4px 0 0;
+  color: #1772d0;
+}
+
+.card-english {
+  margin: 0;
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #333;
+}
+
+.card-kana {
+  margin: 0;
+  font-size: 1.1rem;
+  color: #555;
+}
+
+/* 裏：日本語 */
+.card-japanese-label {
+  font-size: 0.9rem;
+  margin: 0;
+  color: #1772d0;
+}
+
+.card-japanese {
+  margin: 6px 0 0;
+  font-size: 1.4rem;
+  color: #333;
+}
+
+/* カードフッター */
+.card-footer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.card-note {
+  margin: 0;
+  font-size: 0.8rem;
+  color: #888;
+}
+
+/* 発音ボタン */
+.speak-button {
+  border: none;
+  border-radius: 999px;
+  background: #ffba42;
+  color: #4a2b00;
+  font-size: 0.9rem;
+  padding: 6px 14px;
+  box-shadow: 0 3px 7px rgba(160, 90, 0, 0.3);
+  cursor: pointer;
+}
+
+/* ================================
+   ナビボタン（前へ・つぎへ）
+================================ */
+.nav-buttons {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.nav-button {
+  flex: 0 0 auto;
+  min-width: 96px;
+  border-radius: 999px;
+  border: none;
+  padding: 8px 10px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  background: #1772d0;
+  color: #ffffff;
+  box-shadow: 0 3px 8px rgba(0, 60, 130, 0.4);
+  cursor: pointer;
+}
+
+.nav-button:disabled {
+  opacity: 0.4;
+  box-shadow: none;
   cursor: default;
 }
 
-/* 削除／非表示ボタン（共通で×表示） */
-.delete-button {
-  border: none;
-  background: transparent;
-  color: #c0392b;
-  font-size: 1rem;
-  cursor: pointer;
-  padding: 4px;
-}
-
-/* 入力フォーム */
-.custom-form {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.custom-input {
-  border-radius: 999px;
-  border: 1px solid #ffc48a;
-  padding: 8px 12px;
+.card-count {
   font-size: 0.9rem;
-  outline: none;
+  color: #555;
+  min-width: 70px;
+  text-align: center;
 }
 
-.custom-input:focus {
-  border-color: #ff9f43;
-  box-shadow: 0 0 0 2px rgba(255, 159, 67, 0.2);
-}
-
-/* メモ欄 */
-.memo-textarea {
-  width: 100%;
-  min-height: 72px;
-  border-radius: 10px;
-  border: 1px solid #ffc48a;
-  padding: 8px 10px;
-  font-size: 0.9rem;
-  line-height: 1.6;
-  resize: none;
-  box-sizing: border-box;
-  outline: none;
-}
-
-.memo-textarea:focus {
-  border-color: #ff9f43;
-  box-shadow: 0 0 0 2px rgba(255, 159, 67, 0.2);
-}
-
-/* ボタン */
-.primary-button,
-.secondary-button,
-.danger-button {
-  width: 100%;
-  border-radius: 999px;
+/* ================================
+   スタンプ表示
+================================ */
+.stamp-section {
+  margin-top: 16px;
+  background: #ffffff;
+  border-radius: 14px;
+  border: 2px solid #ffe0a6;
   padding: 10px 12px;
+  box-shadow: 0 4px 10px rgba(160, 100, 20, 0.15);
+}
+
+.stamp-today-label,
+.stamp-total-label {
   font-size: 0.9rem;
+  margin: 0 0 4px;
+  color: #8a5a00;
+}
+
+.stamp-today {
+  font-size: 1.1rem;
+  margin-bottom: 8px;
+  letter-spacing: 0.12em;
+  color: #d88900;
+}
+
+.stamp-total {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #8a5a00;
+}
+
+/* ================================
+   ミニテストボタン
+================================ */
+.test-button-area {
+  margin-top: 14px;
+  text-align: center;
+}
+
+.test-start-button {
   border: none;
+  border-radius: 999px;
+  padding: 10px 18px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  background: #ff6f61;
+  color: #ffffff;
+  box-shadow: 0 3px 10px rgba(160, 40, 40, 0.4);
   cursor: pointer;
-  outline: none;
-  margin-top: 4px;
 }
 
-.primary-button {
-  background: #ff9f43;
-  color: #fff;
+/* ================================
+   おうちのかたへ
+================================ */
+.info-card {
+  margin-top: 20px;
+  background: #ffffff;
+  border-radius: 14px;
+  border: 2px solid #d0e6ff;
+  padding: 12px 14px;
+  box-shadow: 0 4px 12px rgba(0, 60, 120, 0.12);
 }
 
-.secondary-button {
-  background: #fff7ef;
-  color: #995200;
-  border: 1px solid #ffc48a;
+.info-title {
+  margin: 0 0 6px;
+  font-size: 1.1rem;
+  color: #1772d0;
 }
 
-.danger-button {
-  background: #f46a6a;
-  color: #fff;
+.info-list {
+  margin: 0;
+  padding-left: 20px;
+  font-size: 0.9rem;
+  color: #444;
 }
 
-.reset-buttons {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+.info-list li {
+  margin-bottom: 4px;
 }
 
-/* 小さめ端末対応 */
-@media (min-width: 480px) {
-  .reset-buttons {
-    flex-direction: row;
+/* ================================
+   レスポンシブ調整
+================================ */
+@media (min-width: 520px) {
+  .app-container {
+    padding-top: 24px;
   }
-  .reset-buttons button {
-    width: 50%;
+
+  .word-card {
+    height: 240px;
   }
 }
