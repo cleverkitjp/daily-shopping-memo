@@ -177,6 +177,7 @@ body {
   background: #fff;
   border: 1px solid #ffd7aa;
   cursor: pointer;
+  white-space: nowrap;  /* ← これを追加 */
 }
 
 .buy-label input[type="checkbox"] {
