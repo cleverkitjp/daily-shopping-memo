@@ -3,6 +3,7 @@
 
   var STORAGE_KEY = "ck-daily-shopping-memo-v1";
 
+  // プリセット品目（Gemini 提案 52 品目）
   var PRESET_ITEMS = [
     // 冷蔵
     { id: "milk", name: "牛乳", category: "冷蔵", builtin: true },
@@ -93,6 +94,10 @@
   var resetTodayBtn;
   var resetAllBtn;
 
+  // -------------------------
+  // state 初期化・保存
+  // -------------------------
+
   function createDefaultState() {
     return {
       version: 1,
@@ -103,12 +108,14 @@
           category: item.category,
           builtin: item.builtin,
           buy: false,
-          done: false
+          done: false,
+          hidden: false
         };
       }),
       settings: {
-        mode: "stock",
-        filterToday: false
+        mode: "stock",          // "stock" | "shopping"
+        filterToday: false,
+        collapsedCategories: {} // { "冷凍": true, ... }
       }
     };
   }
@@ -131,7 +138,8 @@
           category: item.category || "カスタム",
           builtin: !!item.builtin,
           buy: !!item.buy,
-          done: !!item.done
+          done: !!item.done,
+          hidden: !!item.hidden
         };
       });
 
@@ -140,6 +148,10 @@
         data.settings.mode = "stock";
       }
       data.settings.filterToday = !!data.settings.filterToday;
+      data.settings.collapsedCategories =
+        data.settings.collapsedCategories && typeof data.settings.collapsedCategories === "object"
+          ? data.settings.collapsedCategories
+          : {};
 
       data.version = 1;
 
@@ -158,6 +170,10 @@
     }
   }
 
+  // -------------------------
+  // 状態変更ヘルパ
+  // -------------------------
+
   function setMode(mode) {
     if (mode !== "stock" && mode !== "shopping") return;
     state.settings.mode = mode;
@@ -167,6 +183,15 @@
 
   function setFilterToday(flag) {
     state.settings.filterToday = !!flag;
+    render();
+    saveState();
+  }
+
+  function toggleCategoryCollapsed(category) {
+    var map = state.settings.collapsedCategories || {};
+    var current = !!map[category];
+    map[category] = !current;
+    state.settings.collapsedCategories = map;
     render();
     saveState();
   }
@@ -203,7 +228,8 @@
       category: "カスタム",
       builtin: false,
       buy: true,
-      done: false
+      done: false,
+      hidden: false
     });
 
     render();
@@ -251,19 +277,39 @@
     saveState();
   }
 
+  function hideOrDeleteItem(item) {
+    if (item.builtin) {
+      if (
+        window.confirm(
+          "この品目をリストから非表示にしますか？\n（「すべて初期化」を押すと元に戻せます）"
+        )
+      ) {
+        item.hidden = true;
+        render();
+        saveState();
+      }
+    } else {
+      if (window.confirm("この品目をリストから削除しますか？")) {
+        deleteItemById(item.id);
+      }
+    }
+  }
+
+  // -------------------------
+  // 描画
+  // -------------------------
+
   function render() {
+    // モード・フィルタの反映
     modeStockBtn.classList.toggle("active", state.settings.mode === "stock");
-    modeShoppingBtn.classList.toggle(
-      "active",
-      state.settings.mode === "shopping"
-    );
+    modeShoppingBtn.classList.toggle("active", state.settings.mode === "shopping");
     filterTodayCheckbox.checked = state.settings.filterToday;
 
     itemsContainer.innerHTML = "";
 
     CATEGORY_ORDER.forEach(function (category) {
       var catItems = state.items.filter(function (item) {
-        return item.category === category;
+        return item.category === category && !item.hidden;
       });
 
       if (state.settings.filterToday) {
@@ -276,6 +322,11 @@
         return;
       }
 
+      var collapsed = !!(
+        state.settings.collapsedCategories &&
+        state.settings.collapsedCategories[category]
+      );
+
       var card = document.createElement("section");
       card.className = "category-card card";
 
@@ -286,110 +337,156 @@
       title.className = "category-title";
       title.textContent = category;
 
+      var rightBox = document.createElement("div");
+      rightBox.style.display = "flex";
+      rightBox.style.alignItems = "center";
+      rightBox.style.gap = "8px";
+
       var count = document.createElement("div");
       count.className = "category-count";
       count.textContent = catItems.length + "件";
 
+      var toggleBtn = document.createElement("button");
+      toggleBtn.type = "button";
+      toggleBtn.textContent = collapsed ? "＋" : "−";
+      toggleBtn.style.border = "none";
+      toggleBtn.style.background = "transparent";
+      toggleBtn.style.fontSize = "1rem";
+      toggleBtn.style.cursor = "pointer";
+      toggleBtn.setAttribute(
+        "aria-label",
+        collapsed ? "カテゴリを展開" : "カテゴリを折り畳み"
+      );
+
+      toggleBtn.addEventListener("click", function (e) {
+        e.stopPropagation();
+        toggleCategoryCollapsed(category);
+      });
+
+      rightBox.appendChild(count);
+      rightBox.appendChild(toggleBtn);
+
       header.appendChild(title);
-      header.appendChild(count);
+      header.appendChild(rightBox);
+
+      header.addEventListener("click", function () {
+        toggleCategoryCollapsed(category);
+      });
+
       card.appendChild(header);
 
-      catItems.forEach(function (item) {
-        var row = document.createElement("div");
-        row.className = "item-row";
-        row.dataset.id = item.id;
+      if (!collapsed) {
+        catItems.forEach(function (item) {
+          var row = document.createElement("div");
+          row.className = "item-row";
+          row.dataset.id = item.id;
 
-        if (item.buy) {
-          row.classList.add("is-buy");
-        }
-        if (item.done) {
-          row.classList.add("is-done");
-        }
-
-        var main = document.createElement("div");
-        main.className = "item-main";
-
-        var buyLabel = document.createElement("label");
-        buyLabel.className = "buy-label";
-
-        var buyCheckbox = document.createElement("input");
-        buyCheckbox.type = "checkbox";
-        buyCheckbox.className = "buy-checkbox";
-        buyCheckbox.checked = item.buy;
-
-        buyCheckbox.addEventListener("change", function () {
-          handleBuyChange(item, buyCheckbox.checked);
-        });
-
-        var buyText = document.createElement("span");
-        buyText.textContent = "買う";
-
-        buyLabel.appendChild(buyCheckbox);
-        buyLabel.appendChild(buyText);
-
-        var nameSpan = document.createElement("span");
-        nameSpan.className = "item-name";
-        nameSpan.textContent = item.name;
-        if (item.done) {
-          nameSpan.classList.add("done");
-        }
-
-        main.appendChild(buyLabel);
-        main.appendChild(nameSpan);
-
-        var actions = document.createElement("div");
-        actions.className = "item-actions";
-
-        var doneButton = document.createElement("button");
-        doneButton.type = "button";
-        doneButton.className = "done-button";
-
-        if (state.settings.mode === "shopping") {
           if (item.buy) {
-            if (item.done) {
-              doneButton.classList.add("completed");
-              doneButton.textContent = "購入済み";
+            row.classList.add("is-buy");
+          }
+          if (item.done) {
+            row.classList.add("is-done");
+          }
+
+          var main = document.createElement("div");
+          main.className = "item-main";
+
+          var buyLabel = document.createElement("label");
+          buyLabel.className = "buy-label";
+
+          var buyCheckbox = document.createElement("input");
+          buyCheckbox.type = "checkbox";
+          buyCheckbox.className = "buy-checkbox";
+          buyCheckbox.checked = item.buy;
+
+          buyCheckbox.addEventListener("change", function () {
+            handleBuyChange(item, buyCheckbox.checked);
+          });
+
+          var buyText = document.createElement("span");
+          buyText.textContent = "買う";
+
+          buyLabel.appendChild(buyCheckbox);
+          buyLabel.appendChild(buyText);
+
+          var nameSpan = document.createElement("span");
+          nameSpan.className = "item-name";
+          nameSpan.textContent = item.name;
+          if (item.done) {
+            nameSpan.classList.add("done");
+          }
+
+          main.appendChild(buyLabel);
+          main.appendChild(nameSpan);
+
+          var actions = document.createElement("div");
+          actions.className = "item-actions";
+
+          var doneButton = document.createElement("button");
+          doneButton.type = "button";
+          doneButton.className = "done-button";
+
+          if (state.settings.mode === "shopping") {
+            if (item.buy) {
+              if (item.done) {
+                doneButton.classList.add("completed");
+                doneButton.textContent = "購入済み";
+              } else {
+                doneButton.classList.add("pending");
+                doneButton.textContent = "カゴに入れたらタップ";
+              }
+              doneButton.addEventListener("click", function () {
+                handleDoneToggle(item);
+              });
             } else {
-              doneButton.classList.add("pending");
-              doneButton.textContent = "カゴに入れたらタップ";
+              doneButton.classList.add("disabled");
+              doneButton.textContent = "対象外";
             }
-            doneButton.addEventListener("click", function () {
-              handleDoneToggle(item);
-            });
           } else {
             doneButton.classList.add("disabled");
-            doneButton.textContent = "対象外";
+            doneButton.textContent = "買い物中に使用";
           }
-        } else {
-          doneButton.classList.add("disabled");
-          doneButton.textContent = "買い物中に使用";
-        }
 
-        actions.appendChild(doneButton);
+          actions.appendChild(doneButton);
 
-        if (!item.builtin && category === "カスタム") {
+          // 非表示／削除ボタン（プリセット＝非表示／追加品＝削除）
           var delButton = document.createElement("button");
           delButton.type = "button";
           delButton.className = "delete-button";
-          delButton.setAttribute("aria-label", "削除");
-          delButton.textContent = "×";
+          if (item.builtin) {
+            delButton.textContent = "非表示";
+            delButton.setAttribute(
+              "aria-label",
+              "この品目をリストから非表示にする"
+            );
+          } else {
+            delButton.textContent = "×";
+            delButton.setAttribute(
+              "aria-label",
+              "この品目をリストから削除する"
+            );
+          }
+
           delButton.addEventListener("click", function (e) {
             e.stopPropagation();
-            if (window.confirm("この品目をリストから削除しますか？")) {
-              deleteItemById(item.id);
-            }
+            hideOrDeleteItem(item);
           });
-          actions.appendChild(delButton);
-        }
 
-        row.appendChild(main);
-        row.appendChild(actions);
-        card.appendChild(row);
-      });
+          actions.appendChild(delButton);
+
+          row.appendChild(main);
+          row.appendChild(actions);
+          card.appendChild(row);
+        });
+      }
 
       itemsContainer.appendChild(card);
     });
   }
+
+  // -------------------------
+  // 初期化
+  // -------------------------
 
   function init() {
     modeStockBtn = document.getElementById("mode-stock-btn");
@@ -436,7 +533,7 @@
     resetAllBtn.addEventListener("click", function () {
       if (
         window.confirm(
-          "すべて初期化して、プリセットだけの状態に戻しますか？\n追加した品目はすべて削除されます。"
+          "すべて初期化して、プリセットだけの状態に戻しますか？\n追加した品目や非表示設定はすべて削除されます。"
         )
       ) {
         resetAll();
